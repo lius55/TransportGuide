@@ -1,0 +1,182 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta http-equiv="Expires" content="Thu, 01 Dec 1994 16:00:00 GMT">
+<meta name="viewport" content="width=320, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<title>日本公共交通换乘指南(beta0.1版)</title>
+<link class="css" rel="stylesheet" type="text/css" href="css/expGuiCourse.css">
+<link class="css" rel="stylesheet" type="text/css" href="css/expGuiStationTimeTable.css">
+<link class="css" rel="stylesheet" type="text/css" href="css/expGuiSectionTimeTable.css">
+<link class="css" rel="stylesheet" type="text/css" href="css/expGuiDateTime.css">
+<link class="css" rel="stylesheet" type="text/css" href="css/expGuiStation.css">
+<link class="css" rel="stylesheet" type="text/css" href="css/expGuiCondition.css">
+<link class="css" rel="stylesheet" type="text/css" href="css/expGuiCourse.css">
+<link class="css" rel="stylesheet" type="text/css" href="sample.css">
+
+<script type="text/javascript" src="lang/cn.js" charset="UTF-8"></script>
+<script type="text/javascript" src="js/expGuiDateTime.js?key=rnwfzKX4rvNVZYat" charset="UTF-8"></script>
+<script type="text/javascript" src="js/expGuiStationTimeTable.js?key=rnwfzKX4rvNVZYat" charset="UTF-8"></script>
+<script type="text/javascript" src="js/expGuiSectionTimeTable.js?key=rnwfzKX4rvNVZYat" charset="UTF-8"></script>
+<script type="text/javascript" src="js/expGuiCondition.js?key=rnwfzKX4rvNVZYat" charset="UTF-8"></script>
+<script type="text/javascript" src="js/expGuiStation.js?key=rnwfzKX4rvNVZYat" charset="UTF-8"></script>
+<script type="text/javascript" src="js/expGuiCourse.js?key=rnwfzKX4rvNVZYat" charset="UTF-8"></script>
+<script type="text/javascript" src="js/json2.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript">
+<!--
+var stationTimetable;// 列車時刻表パーツ
+var courseStationTimeTable;// 駅時刻表パーツ
+var courseSectionTimeTable;// 区間時刻表パーツ
+var resultApp;//経路表示パーツ
+
+/*
+ * パーツを初期化
+ */
+function init(){
+  // 為替表示
+  $.ajax({
+  	type: "GET",
+  	url: "http://tony56.sakura.ne.jp/app/get-exchange.php",
+  	success: function(result){
+    	$("#cny_to_jpy").html("最新汇率:100日元=" + result.rate*100 + "人民币");
+  	}
+  });
+
+  // 駅時刻表
+  courseStationTimeTable = new expGuiStationTimeTable(document.getElementById("stationTimetable"));
+  // 区間時刻表
+  courseSectionTimeTable = new expGuiSectionTimeTable(document.getElementById("sectionTimetable"));  
+  // 経路探索
+  resultApp = new expGuiCourse(document.getElementById("course"));
+
+  // 駅名入力パーツ#1初期化
+  stationApp1 = new expGuiStation(document.getElementById("station1"));
+  stationApp1.setConfigure("maxStation",10);
+  stationApp1.setConfigure("type",stationApp1.TYPE_TRAIN +":"+ stationApp1.TYPE_PLANE +":"+ stationApp1.TYPE_SHIP);
+  stationApp1.dispStation();
+  stationApp1.setStation('成田空港(鉄道)');
+
+  // 駅名入力パーツ#2初期化
+  stationApp2 = new expGuiStation(document.getElementById("station2"));
+  stationApp2.setConfigure("maxStation",10);
+  stationApp2.setConfigure("type",stationApp2.TYPE_TRAIN +":"+ stationApp2.TYPE_PLANE +":"+ stationApp2.TYPE_SHIP);
+  stationApp2.dispStation();
+  stationApp2.setStation('国際展示場');
+}
+
+/*
+ * 経路の取得
+ */
+function search(){
+  // 探索条件を設定
+  var searchObject = resultApp.createSearchInterface();
+  console.log("from:" + stationApp1.getStation());
+  console.log("to:" + stationApp2.getStation());
+  var fromStation = stationApp1.getStation();
+  var toStation = stationApp2.getStation();
+  
+  // 発着地を設定
+  searchObject.setViaList(fromStation + ":" + toStation);
+  // 時刻表へのリンクを設定
+  var stationTimeTableMenu = new resultApp.menu("駅時刻表",lineStationTimeTable,resultApp.TYPE_TRAIN);
+  var sectionTimeTableMenu = new resultApp.menu("区間時刻表",lineSectionTimeTable,resultApp.TYPE_TRAIN);
+  resultApp.addLineMenu(stationTimeTableMenu);
+  resultApp.addLineMenu(sectionTimeTableMenu);
+  // 探索実行
+  resultApp.search(searchObject,setResult);
+}
+
+/*
+ * 経路探索のコールバック
+ */
+function setResult(isSuccess){
+  if(!isSuccess){
+    alert("探索結果が取得できませんでした");
+  }
+}
+
+/*
+ * 駅時刻表の表示
+ */
+function lineStationTimeTable(sectionIndex){
+  // 区間時刻表と列車時刻表は隠す
+  document.getElementById("sectionTimetable").style.display = 'none';
+  // 駅時刻表を表示
+  document.getElementById("stationTimetable").style.display = 'block';
+  courseStationTimeTable.dispCourseTimetable(resultApp.getSerializeData(),sectionIndex,resultTimeTable);
+}
+
+/*
+ * 区間時刻表の表示
+ */
+function lineSectionTimeTable(sectionIndex){
+  // 駅時刻表と列車時刻表は隠す
+  document.getElementById("stationTimetable").style.display = 'none';
+  // 区間時刻表を表示
+  document.getElementById("sectionTimetable").style.display = 'block';
+  courseSectionTimeTable.dispRailTimetable(resultApp.getSerializeData(),sectionIndex,resultTimeTable);
+}
+
+/*
+ * 時刻表取得時のコールバック関数
+ */
+function resultTimeTable(isSuccess){
+  if(!isSuccess){
+    alert("時刻表が取得できませんでした");
+  }
+}
+// -->
+</script>
+</head>
+<body onLoad="Javascript:init();">
+
+<div id="cny_to_jpy"></div>
+
+<!-- 時刻表パーツ -->
+<table class="sample">
+  <tr>
+    <td class="sample_title">起点</td>
+  </tr>
+  <tr>
+    <td>
+      <div id="station1" style="width:100%;">成田空港(鉄道)</div>
+    </td>
+  </tr>
+  <tr>
+    <td class="sample_title">终点</td>
+  </tr>
+  <tr>
+    <td>
+      <div id="station2" style="width:100%;">国際展示場</div>
+    </td>
+  </tr>
+  <tr>
+    <td class="sample_top">
+      <input class="sample_btn" type="button" value="路线查找" onClick="JavaScript:search();" />
+      <div id="course" style="padding-top:5px;"></div>
+    </td>
+    <td>
+      <div id="stationTimetable" style="display:none;"></div>
+      <div id="sectionTimetable" style="display:none;"></div>
+    </td>
+  </tr>
+</table>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-89359422-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+</body>
+</html>
+
