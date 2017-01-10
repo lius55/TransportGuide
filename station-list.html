@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta http-equiv="Expires" content="Thu, 01 Dec 1994 16:00:00 GMT">
+<meta name="viewport" content="width=320, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<title>日本地铁一览</title>
+
+<link type="text/css" media="screen" href="jqGrid/jquery-ui.min.css" rel="stylesheet" />
+<link type="text/css" media="screen" href="jqGrid/css/ui.jqgrid.css" rel="stylesheet" />
+<script type="text/javascript" src="jqGrid/js/jquery-1.11.0.min.js" ></script>
+<script type="text/javascript" src="jqGrid/js/jquery.jqGrid.min.js" ></script>
+<script type="text/javascript" src="jqGrid/js/i18n/grid.locale-ja.js" ></script>
+
+<script type="text/javascript">
+
+jQuery("#list2").jqGrid({
+   	url:'http://tony56.sakura.ne.jp/app/subwayGuide/station-list.php?page_num=5',
+	datatype: "json",
+   	colNames:['#','线路', '车站'],
+   	colModel:[
+   		{name:'id',index:'id', width:55},
+   		{name:'invdate',index:'invdate', width:90},
+   		{name:'name',index:'name asc, invdate', width:100},
+   		{name:'amount',index:'amount', width:80, align:"right"},
+   		{name:'tax',index:'tax', width:80, align:"right"},		
+   		{name:'total',index:'total', width:80,align:"right"},		
+   		{name:'note',index:'note', width:150, sortable:false}		
+   	],
+   	rowNum:10,
+   	rowList:[10,20,30],
+   	pager: '#pager2',
+   	sortname: 'sid',
+    viewrecords: true,
+    sortorder: "desc",
+    caption:"JSON Example"
+});
+jQuery("#list2").jqGrid('navGrid','#pager2',{edit:false,add:false,del:false});
+
+</script>
+</head>
+<body>
+
+<table id="list2"></table>
+<div id="pager2"></div>
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-89359422-1', 'auto');
+  ga('send', 'pageview');
+</script>
+</body>
+</html>
