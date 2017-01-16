@@ -20,7 +20,7 @@ var expGuiCourse = function (pObject, config) {
     /*
     * Webサービスの設定
     */
-    var apiURL = "http://tony56.sakura.ne.jp/app/subwayGuide/redirect-api.php?";
+    var apiURL = "http://tony56.sakura.ne.jp/app/transportGuide/redirect-api.php?";
 
     /*
     * GETパラメータからキーの設定

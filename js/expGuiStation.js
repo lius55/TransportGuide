@@ -19,7 +19,7 @@ var expGuiStation = function (pObject, config) {
     /*
     * Webサービスの設定
     */
-    var apiURL = "http://tony56.sakura.ne.jp/app/subwayGuide/search-station.php?";
+    var apiURL = "http://tony56.sakura.ne.jp/app/transportGuide/search-station.php?";
 
     /*
     * GETパラメータからキーの設定
