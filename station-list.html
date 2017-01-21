@@ -1,4 +1,4 @@
-<!DOCTYPE>
+<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -6,49 +6,187 @@
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta name="viewport" content="width=320, initial-scale=1, maximum-scale=1, user-scalable=no" />
 
-<title>日本地铁一览</title>
+<title>日本地铁站一览</title>
 
-<script type="text/javascript" src="js/angular.min.js" ></script>
+<script type="text/javascript" src="js/jquery.js" ></script>
 
 <script type="text/javascript">
 
-jQuery("#list2").jqGrid({
-   	url:'http://tony56.sakura.ne.jp/app/subwayGuide/station-list.php?page_num=5',
-	datatype: "json",
-   	colNames:['#','线路', '车站'],
-   	colModel:[
-   		{name:'id',index:'id', width:55},
-   		{name:'invdate',index:'invdate', width:90},
-   		{name:'name',index:'name asc, invdate', width:100},
-   		{name:'amount',index:'amount', width:80, align:"right"},
-   		{name:'tax',index:'tax', width:80, align:"right"},		
-   		{name:'total',index:'total', width:80,align:"right"},		
-   		{name:'note',index:'note', width:150, sortable:false}		
-   	],
-   	rowNum:10,
-   	rowList:[10,20,30],
-   	pager: '#pager2',
-   	sortname: 'sid',
-    viewrecords: true,
-    sortorder: "desc",
-    caption:"JSON Example"
-});
+// 現在表示しているページ番号
+var display_page_num = 0;
+// 合計ページ数
+var total_pages = 0;
+
+/**
+ * 駅リスト取得
+ * int page_num ページ番号
+ **/
+function getStationList(page_num = 1) {
+    $.ajax({
+        type: "GET",
+        url: "http://tony56.sakura.ne.jp/app/transportGuide/station-list.php",
+        data: "page_num=" + page_num + 
+            "&keyword=" + $("#keyword").val() +  "&lang=" + $("#lang").val(),
+        success: showStationList
+    });
+}
+
+/**
+ * 駅リスト表示
+ * String response_json サーバから返却されたjson
+ **/
+function showStationList(response_json){
+    // 表示番号更新
+    display_page_num = parseInt(response_json.page_num);
+    total_pages = parseInt(response_json.total_pages);
+
+    // table header 作成
+    var table_element = "<div class='station-list'><table>" + 
+      "<tr><th>#</th><th width>路线(日文)</th>" + 
+      "<th>地铁站(日文)</th><th>地铁站(中文)</th></tr>";
+
+    // 駅リスト一覧
+    for(var i = 0; 
+        (response_json.station_list != undefined) && (i < response_json.station_list.length); 
+        i++) {
+        var station = response_json.station_list[i];
+        var tr_element = "<tr><td>" + station.sid + "</td>" +
+            "<td><span class='td_block'>" + station.line_name + "</span></td>" +
+            "<td><span class='td_block'>" + station.station_name + "</span></td>" +
+            "<td><span class='td_block'>" + station.chinese_station_name + "</span></td></tr>";
+        table_element += tr_element;
+    }
+
+    // ページ番号表示
+    var showPageNum = function(page_num) {
+        var page_num_element = "";
+        var start_num = 1;
+
+        // 開始番号計算
+        if (page_num > 3) {
+            start_num = page_num - 2;
+        }
+
+        // 最大ページ近づいた場合の処理
+        if ((total_pages - 2 < page_num) && total_pages > 5) {
+            start_num = total_pages - 4;
+        }
+
+        // ページ番号生成
+        for (var i = 0 ; i < 5　&& (parseInt(start_num + i) <= total_pages); i++) {
+            var current_page_num = parseInt(start_num + i);
+            var class_name = (start_num + i == page_num) ? 
+                'current-num-box num-box' : 'page-num-box num-box change-page';
+            page_num_element += "<span class='" + class_name + "' page-num='" + current_page_num + "'>" 
+                + current_page_num + "</span>"; 
+        }
+        return page_num_element;
+    };
+
+    table_element += "</table></div>";
+
+    // pager 作成
+    var pager_element = "<div class='footer'>" +
+        ((display_page_num > 1) ? 
+        "<span id='first-page' class='change-page jump-page' page-num='1'>第一页</span>" : "") + 
+        showPageNum(display_page_num) +
+        ((total_pages > display_page_num) ? 
+        "<span id='last-page' class='change-page jump-page' page-num='" + 
+        total_pages + "'>最后一页</span>" : "") + "</div>";
+
+    $("#station-container").html(table_element + pager_element);
+}
 
 /*
- * Baidu统计
+ * Baidu統計
  */
 var _hmt = _hmt || [];
 (function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?f1d04e30f08202d4aa669cc5a2b00445";
-  var s = document.getElementsByTagName("script")[0]; 
-  s.parentNode.insertBefore(hm, s);
+    var hm = document.createElement("script");
+    hm.src = "https://hm.baidu.com/hm.js?f1d04e30f08202d4aa669cc5a2b00445";
+    var s = document.getElementsByTagName("script")[0]; 
+    s.parentNode.insertBefore(hm, s);
 })();
 
+$(document).ready(function() {
+    // 画面初期化
+    getStationList();
+
+    $("#container").on("click", "#search", function() {
+        // Baidu統計イベントトラキング
+        _hmt.push(['_trackEvent', 'search', 'station', 'keyword', 
+            $("#keyword").val() + "&" + $("#lang").val()]);
+        getStationList();
+    });
+
+    /**
+     * ページ変更
+     * pageload後の指定が必要のため、$(document)で指定しています
+     **/
+    $("#container").on("click", ".change-page", function() {
+        var page_num = parseInt($(this).attr("page-num"));
+        getStationList(page_num);
+    });
+});
 </script>
+
+<style type="text/css">
+.station-list {
+    overflow-x: auto;
+}
+.station-list::-webkit-scrollbar {
+    height: 8px;
+}
+.station-list::-webkit-scrollbar-track {
+    border-radius: 8px;
+    background: rgba(238, 238, 238, 1);
+}
+.station-list::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background: rgba(169, 170, 161, 1);
+}
+table th { 
+    padding: 5px; 
+}
+table{
+    white-space: nowrap;
+    width: 100%;
+}
+table td {
+    padding: 3px;
+    text-align: center;
+}
+.footer {
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 30px;
+}
+.jump-page {
+    padding: 5px;
+    text-decoration: underline;
+}
+.num-box {
+    padding: 5px;
+    margin: 5px;
+}
+.page-num-box {
+    border: 1px solid blue;
+}
+</style>
 </head>
 <body>
-
-
+<div id="container">
+    <div>
+    车站：<input type="text" name="station" value="" id="keyword" />
+    <span>
+      <select id="lang">
+        <option value="cn" selected>中文</option>
+        <option value="jp">日文</option>
+      </select>
+    </span>
+    <span><input type="button" name="search" value="检索" id="search"/></ins></span>
+    </div>
+    <div id="station-container"></div>
+</div>
 </body>
 </html>

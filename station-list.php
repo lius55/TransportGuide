@@ -8,10 +8,12 @@ mysql_set_charset(DB_CHARSET);
 $db = mysql_select_db(DB_NAME, $link);
 
 $page_num = $_GET["page_num"];
-$page_size = 40;
+// 1ページの表示件数
+$page_size = 15;
 
 // ページサイズ計算
-$result = mysql_query('SELECT COUNT(*) AS count FROM app_station_info');
+$sql = "SELECT COUNT(*) AS count FROM app_station_info";
+$result = mysql_query(add_search_condition($sql));
 $row = mysql_fetch_array($result);
 $count = $row['count'];
 
@@ -21,10 +23,13 @@ if ($count > 0) {
 	$total_pages = 0;
 }
 
+// 駅情報検索
+$sql = "SELECT sid,line_name,station_name,chinese_station_name FROM app_station_info";
 $result = mysql_query(
-	'SELECT sid,line_name,station_name FROM app_station_info limit ' .
-	($page_num - 1) * $page_size . ',' . $page_size . '');
+	add_search_condition($sql) . 
+	" limit " . ($page_num - 1) * $page_size . ',' . $page_size . '');
 
+// 返却結果設定
 $response->page_num = $page_num;
 $response->total_pages = $total_pages;
 
@@ -33,10 +38,27 @@ while ($row = mysql_fetch_assoc($result)) {
 	$response->station_list[$row_num]['sid'] = $row['sid'];
 	$response->station_list[$row_num]['line_name'] = $row['line_name'];
 	$response->station_list[$row_num]['station_name'] = $row['station_name'];
+	$response->station_list[$row_num]['chinese_station_name'] = $row['chinese_station_name'];
+	
 	$row_num++;
 }
 
+// 検査結果返却
 header("Content-type: text/html; charset=utf-8");
 header('Content-Type: application/json');
 echo json_encode($response, JSON_UNESCAPED_UNICODE);
+
+/**
+ * sqlに検索条件追加
+ * $ql sql文字列
+ **/
+function add_search_condition($sql) {
+	// 検索keywordと検索言語設定された時のみ条件追加を行う
+	if (isset($_GET["keyword"]) && isset($_GET["lang"])) {
+		$lang = $_GET["lang"];
+		$sql .= " WHERE " . ($lang == 'jp' ? "station_name" : "chinese_station_name") .
+			" like '%" . $_GET["keyword"] . "%' ";
+	}
+	return $sql;
+}
 ?>
