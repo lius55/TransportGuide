@@ -6,7 +6,7 @@ $station_name = $_GET["name"];
 
 // 翻訳apiのurl設定
 //$translate_api_url = 'http://kanconvit.ta2o.net/api.cgi?format=json&ctext='.$station_name;
-$translate_api_url = 'http://tony56.sakura.ne.jp/app/subwayGuide/translate.php?text='.$station_name;
+$translate_api_url = 'http://tony56.sakura.ne.jp/app/transportGuide/translate.php?text='.$station_name;
 
 // 中国語⇨日本語への変換結果取得
 $translated_station_name = urlencode(json_decode(file_get_contents($translate_api_url))->str);

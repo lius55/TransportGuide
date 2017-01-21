@@ -25,8 +25,7 @@ function getStationList(page_num = 1) {
     $.ajax({
         type: "GET",
         url: "http://tony56.sakura.ne.jp/app/transportGuide/station-list.php",
-        data: "page_num=" + page_num + 
-            "&keyword=" + $("#keyword").val() +  "&lang=" + $("#lang").val(),
+        data: "page_num=" + page_num + "&keyword=" + $("#keyword").val(),
         success: showStationList
     });
 }
@@ -121,7 +120,8 @@ $(document).ready(function() {
 
     /**
      * ページ変更
-     * pageload後の指定が必要のため、$(document)で指定しています
+     * pageload後の指定が必要のため、$(#container)で指定しています
+     * *注意：$(document)はiOs上動かない)*
      **/
     $("#container").on("click", ".change-page", function() {
         var page_num = parseInt($(this).attr("page-num"));
@@ -220,18 +220,13 @@ table tr:hover {
     border: 1px solid blue;
 }
 </style>
+
 </head>
 <body>
 <div id="container">
     <div>
     车站：<input type="text" name="station" value="" id="keyword" />
-    <span>
-      <select id="lang">
-        <option value="cn" selected>中文</option>
-        <option value="jp">日文</option>
-      </select>
-    </span>
-    <span><input type="button" name="search" value="检索" id="search"/></ins></span>
+    <span><input type="button" name="search" value="检索" id="search" /></span>
     </div>
     <div id="station-container"></div>
 </div>

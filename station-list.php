@@ -1,6 +1,7 @@
 <?php
 
 include 'config.php';
+include('function/translator.php');
 
 // DB接続
 $link = mysql_connect(DB_HOST, DB_USER, DB_PASSWORD);
@@ -54,10 +55,8 @@ echo json_encode($response, JSON_UNESCAPED_UNICODE);
  **/
 function add_search_condition($sql) {
 	// 検索keywordと検索言語設定された時のみ条件追加を行う
-	if (isset($_GET["keyword"]) && isset($_GET["lang"])) {
-		$lang = $_GET["lang"];
-		$sql .= " WHERE " . ($lang == 'jp' ? "station_name" : "chinese_station_name") .
-			" like '%" . $_GET["keyword"] . "%' ";
+	if (isset($_GET["keyword"])) {
+		$sql .= " WHERE station_name" . " like '%" . translate($_GET["keyword"]) . "%' ";
 	}
 	return $sql;
 }
