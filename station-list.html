@@ -113,8 +113,7 @@ $(document).ready(function() {
 
     $("#container").on("click", "#search", function() {
         // Baidu統計イベントトラキング
-        _hmt.push(['_trackEvent', 'search', 'station', 'keyword', 
-            $("#keyword").val() + "&" + $("#lang").val()]);
+        _hmt.push(['_trackEvent', 'search_station', 'keyword', $("#keyword").val(), $("#keyword").val()]);
         getStationList();
     });
 
